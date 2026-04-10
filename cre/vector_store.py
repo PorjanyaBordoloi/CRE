@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import chromadb
-from chromadb.config import Settings
 
 
 class VectorStore:
@@ -19,13 +18,8 @@ class VectorStore:
         self.persist_dir = persist_dir or Path.cwd() / ".cre" / "vector_store"
         self.persist_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize ChromaDB with persistence
-        settings = Settings(
-            chroma_db_impl="duckdb+parquet",
-            persist_directory=str(self.persist_dir),
-            anonymized_telemetry=False,
-        )
-        self.client = chromadb.Client(settings)
+        # Initialize ChromaDB with persistence (new API 0.5+)
+        self.client = chromadb.PersistentClient(path=str(self.persist_dir))
         self.collection = self.client.get_or_create_collection(
             name="documents",
             metadata={"hnsw:space": "cosine"},
