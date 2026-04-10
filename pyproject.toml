@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cre"
+version = "0.1.0"
+description = "Context Retrieval Engine - Composable context management layer for LLM workflows"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Porjanya Bordoloi", email = "porjanya@example.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "typer[all]>=0.12",
+    "chromadb>=0.5",
+    "sentence-transformers>=3",
+    "anthropic>=0.25",
+    "openai>=1.0",
+    "ollama>=0.2",
+    "textual>=0.60",
+    "rich>=13",
+    "pyyaml>=6",
+    "tiktoken>=0.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "black>=23",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+cre = "cre.cli:app"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-v --cov=cre --cov-report=term-missing"
