@@ -3,6 +3,7 @@
 
 # Local development guides (per-developer, not tracked)
 CLAUDE.md
+LOCAL_TESTING_GUIDE.md
 
 # Python
 __pycache__/
