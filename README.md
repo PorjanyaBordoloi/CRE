@@ -209,6 +209,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, setup, and good first iss
 
 ---
 
-Built by Porjanya Bordoloi (The Flame)
-RGU AI & Data Science
+Built by Porjanya Bordoloi (Paul)
+
 *The missing layer between your knowledge and your token window.*
