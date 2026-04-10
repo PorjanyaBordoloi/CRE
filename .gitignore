@@ -1,6 +1,9 @@
 # CRE runtime directories (per-project state)
 .cre/
 
+# Local development guides (per-developer, not tracked)
+CLAUDE.md
+
 # Python
 __pycache__/
 *.py[cod]
