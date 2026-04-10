@@ -71,10 +71,26 @@ def ingest(
         "--domain",
         help="Domain classification (research, academics, music, self, synthesis, aria)"
     ),
+    compress: bool = typer.Option(
+        None,
+        "--compress",
+        help="Auto-compress to T2+T3 after ingest (overrides config)"
+    ),
+    no_compress: bool = typer.Option(
+        False,
+        "--no-compress",
+        help="Skip auto-compress even if enabled in config"
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Force compression even if T2/T3 already exist"
+    ),
 ) -> None:
     """Ingest markdown files into vector store and memory.
 
     Reads files, chunks them, embeds into ChromaDB L1, and stores in SQLite L2.
+    Optionally auto-compresses to T2 (summary) and T3 (theme) tiers.
     """
     ingest_path = Path(path)
     if not ingest_path.exists():
@@ -84,9 +100,17 @@ def ingest(
     config = Config()
     vector_store = VectorStore()
     memory = Memory()
-    ingestor = Ingestor(vector_store, memory)
+    sidecar = get_sidecar(config) if not no_compress else None
+    ingestor = Ingestor(vector_store, memory, sidecar=sidecar)
+
+    # Determine if compression should happen
+    should_compress = no_compress is False and (compress is True or (compress is None and config.auto_compress))
 
     try:
+        # Phase 1: Ingest
+        console.print("[bold]Phase 1/2: Ingesting...[/bold]")
+
+        ingest_path_str = str(ingest_path)
         if ingest_path.is_file():
             chunk_ids = ingestor.ingest_file(ingest_path, domain=domain, tier=tier)
         else:
@@ -94,16 +118,48 @@ def ingest(
                 ingest_path, domain=domain, tier=tier
             )
 
-        # Get stats
         vector_stats = vector_store.get_stats()
         memory_stats = memory.get_stats()
 
+        console.print(f"✅ {len(chunk_ids)} chunks → T1")
+
+        # Phase 2: Compress (if requested)
+        compress_summary = ""
+        if should_compress and tier == 1:
+            console.print("[bold]Phase 2/2: Compressing...[/bold]")
+
+            # Get source files from ingested chunks
+            if ingest_path.is_file():
+                sources = [str(ingest_path)]
+            else:
+                # For directories, get unique source files from the chunks
+                tier1_entries = memory.retrieve_by_tier(1)
+                sources = sorted(set(e.get("source_file") for e in tier1_entries if e.get("source_file")))
+                # Only process newly ingested sources
+                sources = [s for s in sources if Path(s).parent == ingest_path or Path(s) == ingest_path]
+
+            compression_results = []
+            for source in sources:
+                result = ingestor.compress_source(source, domain or "general", force=force)
+                compression_results.append(result)
+
+                if result["skipped"]:
+                    console.print(f"⊘ {Path(source).name}: {result['reason']}")
+                else:
+                    t2_tokens = result["output_tokens_t2"]
+                    t3_tokens = result["output_tokens_t3"]
+                    console.print(f"✅ T2 written ({t2_tokens} tokens) ✅ T3 written ({t3_tokens} tokens)")
+
+            if compression_results and not all(r["skipped"] for r in compression_results):
+                compress_summary = f"\n💨 Auto-compressed: {sum(1 for r in compression_results if not r['skipped'])} source(s)"
+
+        # Final summary
         console.print(
             Panel(
                 f"✅ Ingested {len(chunk_ids)} chunks\n"
                 f"📊 Vector Store: {vector_stats['total_chunks']} total chunks\n"
                 f"💾 Memory: {memory_stats['total_entries']} total entries\n"
-                f"  Tier breakdown: {memory_stats['by_tier']}",
+                f"  Tier breakdown: {memory_stats['by_tier']}{compress_summary}",
                 title="Ingest Complete",
                 style="green",
             )

@@ -22,6 +22,9 @@ DEFAULT_CONFIG = {
         "default_inject_budget": 2000,
         "tier_weights": [0.5, 0.35, 0.15],  # themes, summaries, facts
     },
+    "ingest": {
+        "auto_compress": False,  # Auto-compress to T2 and T3 after ingest
+    },
 }
 
 
@@ -128,3 +131,8 @@ class Config:
     def tier_weights(self) -> list:
         """Get tier weights [themes, summaries, facts]."""
         return self.get("memory.tier_weights", [0.5, 0.35, 0.15])
+
+    @property
+    def auto_compress(self) -> bool:
+        """Get auto-compress setting for ingest."""
+        return self.get("ingest.auto_compress", False)
