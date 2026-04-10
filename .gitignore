@@ -1,6 +1,9 @@
 # CRE runtime directories (per-project state)
 .cre/
 
+# Local demo/test projects
+demo1/
+
 # Local development guides (per-developer, not tracked)
 CLAUDE.md
 LOCAL_TESTING_GUIDE.md
