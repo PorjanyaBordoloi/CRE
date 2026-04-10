@@ -74,23 +74,35 @@ Structured abstraction:
 - **Tier 3 (Themes)**: High-level bullet-point themes
 
 ### L3: Sidecar LLM
-Pluggable compression and ranking backends:
-- **Anthropic**: Claude Haiku (cheapest, default)
-- **OpenAI**: GPT-4o-mini
-- **Ollama**: Local models (Mistral, Phi-3, etc.)
-- **None**: L1+L2 only mode (no sidecar cost)
+Pluggable compression and ranking backends. Pick any LLM provider:
+
+| Provider | Model | Cost | Use Case | Speed |
+|----------|-------|------|----------|-------|
+| **Anthropic** | Claude Haiku | $0.80/1M tokens | Best all-rounder | ⭐⭐⭐ |
+| **Groq** | Mixtral 8x7B | Free (beta) | Ultra-fast inference | ⭐⭐⭐⭐⭐ |
+| **Google Gemini** | Gemini 2.0 Flash | $0.075/1M tokens | Reasoning-focused | ⭐⭐⭐⭐ |
+| **OpenAI** | GPT-4o-mini | $0.15/1M tokens | Most capable | ⭐⭐⭐ |
+| **OpenRouter** | 100+ models | Variable | Maximum choice | Varies |
+| **Ollama** | Local (Mistral, Phi-3) | Free | Private, offline | ⭐⭐ |
+| **None** | - | Free | Vector+memory only | N/A |
+
+**Why provider-agnostic?**
+- You control your costs (free models available)
+- Lock-in free (switch backends anytime)
+- Different projects, different priorities (speed vs cost vs capability)
 
 ## Configuration
 
-Edit `.cre/config.yaml`:
+Edit `.cre/config.yaml` to choose your sidecar backend:
 
+### Groq (Recommended: Free + Ultra-Fast)
 ```yaml
 version: '0.1'
 
 sidecar:
-  backend: anthropic  # anthropic | openai | ollama | none
-  model: claude-haiku-4-5
-  api_key_env: ANTHROPIC_API_KEY
+  backend: groq
+  model: mixtral-8x7b-32768
+  api_key_env: GROQ_API_KEY
 
 embedding:
   model: all-MiniLM-L6-v2
@@ -99,7 +111,53 @@ embedding:
 
 memory:
   default_inject_budget: 2000
-  tier_weights: [0.5, 0.35, 0.15]  # themes, summaries, facts
+  tier_weights: [0.5, 0.35, 0.15]
+```
+
+### Anthropic Claude (Default: Most Balanced)
+```yaml
+sidecar:
+  backend: anthropic
+  model: claude-haiku-4-5
+  api_key_env: ANTHROPIC_API_KEY
+```
+
+### Google Gemini (Reasoning-Focused)
+```yaml
+sidecar:
+  backend: gemini
+  model: gemini-2.0-flash
+  api_key_env: GOOGLE_API_KEY
+```
+
+### OpenAI GPT (Most Capable)
+```yaml
+sidecar:
+  backend: openai
+  model: gpt-4o-mini
+  api_key_env: OPENAI_API_KEY
+```
+
+### OpenRouter (100+ Models)
+```yaml
+sidecar:
+  backend: openrouter
+  model: mistralai/mistral-7b-instruct
+  api_key_env: OPENROUTER_API_KEY
+```
+
+### Ollama (Local, Private, Free)
+```yaml
+sidecar:
+  backend: ollama
+  model: mistral
+  api_key_env: ""  # Ollama runs locally
+```
+
+### Vector+Memory Only (No LLM Cost)
+```yaml
+sidecar:
+  backend: none
 ```
 
 ## Commands
@@ -182,10 +240,17 @@ tests/
 ### v0.1 (Current) — Core Engine
 - ✅ L1 vector store (ChromaDB)
 - ✅ L2 tiered memory (SQLite)
-- ✅ L3 sidecar backends (Anthropic/OpenAI/Ollama)
+- ✅ L3 pluggable sidecar backends:
+  - Anthropic Claude (default)
+  - OpenAI GPT
+  - Groq (free, ultra-fast)
+  - Google Gemini (reasoning)
+  - OpenRouter (100+ models)
+  - Ollama (local, private)
+  - None (L1+L2 only)
 - ✅ Retriever orchestration
 - ✅ Context injection
-- ✅ CLI commands
+- ✅ CLI commands (8 total)
 
 ### v0.2 — Polish & Tools
 - TUI viewer (Textual)
