@@ -1,5 +1,9 @@
 """CRE API — FastAPI entrypoint."""
 
+import os
+
+PORT = int(os.environ.get("PORT", 8000))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
